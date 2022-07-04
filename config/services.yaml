@@ -4,7 +4,8 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
-
+    set_status_url: '%env(resolve:SET_STATUS_ORDER)%'
+    set_logistics_url: '%env(resolve:SET_LOGISTICS)%'
 services:
     # default configuration for services in *this* file
     _defaults:
@@ -19,6 +20,31 @@ services:
             - '../src/DependencyInjection/'
             - '../src/Entity/'
             - '../src/Kernel.php'
+            - '../src/Serializer/Denormalizer/'
+            - '../src/Serializer/Normalizer/'
+            - '../src/Dto/'
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: [ 'controller.service_arguments' ]
+
+
+    App\MessageHandler\LogisticsMessageHandler:
+        tags:
+            -
+                name: messenger.message_handler
+                handles: App\Message\LogisticsMessage
+
+    App\MessageHandler\SendLogisticsMessageHandler:
+        tags:
+            -
+                name: messenger.message_handler
+                handles: App\Message\SendLogisticsMessage
+
+    App\MessageHandler\SendCompletedOrderMessageHandler:
+        tags:
+            - name: messenger.message_handler
+              handles: App\Message\SendCompletedOrderMessage

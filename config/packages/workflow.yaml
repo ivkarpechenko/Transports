@@ -1,0 +1,27 @@
+framework:
+    workflows:
+        order:
+            type: state_machine
+            audit_trail:
+                enabled: "%kernel.debug%"
+            marking_store:
+                type: 'method'
+                property: 'status'
+            supports:
+                - App\Entity\Logistics
+            initial_marking: Created
+            places:
+                - Created
+                - Processed
+                - Handed over to the pickup point
+                - Delivered
+            transitions:
+                worked:
+                    from: Created
+                    to:   Processed
+                to_place:
+                    from: Processed
+                    to:   Handed over to the pickup point
+                complete:
+                    from: Handed over to the pickup point
+                    to:   Delivered
