@@ -18,7 +18,7 @@ class LogisticsMessageHandler implements MessageHandlerInterface
 
     public function __invoke(LogisticsMessage $logisticsMessage)
     {
-        $logistics = $this->logisticsRepository->find($logisticsMessage->getId());
+        $logistics = $this->logisticsRepository->find($logisticsMessage->id);
         $this->logger->info('Logistics change status', ['LogisticsId' => $logistics->getId(), 'status' => $logistics->getStatus()]);
     }
 }

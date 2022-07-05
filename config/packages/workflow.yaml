@@ -1,6 +1,6 @@
 framework:
     workflows:
-        order:
+        logistics:
             type: state_machine
             audit_trail:
                 enabled: "%kernel.debug%"

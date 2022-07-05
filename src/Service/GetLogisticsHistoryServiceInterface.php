@@ -2,8 +2,7 @@
 
 namespace App\Service;
 
-interface GetHistoryLogisticsServiceInterface
+interface GetLogisticsHistoryServiceInterface
 {
     public function getHistoryOrder(int $id): array;
-
 }

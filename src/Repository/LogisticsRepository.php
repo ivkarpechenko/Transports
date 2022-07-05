@@ -29,25 +29,4 @@ class LogisticsRepository extends ServiceEntityRepository
             $this->getEntityManager()->flush();
         }
     }
-
-    public function remove(Logistics $entity, bool $flush = false): void
-    {
-        $this->getEntityManager()->remove($entity);
-
-        if ($flush) {
-            $this->getEntityManager()->flush();
-        }
-    }
-
-    public function findHistoryById(int $id): array
-    {
-        return $this->createQueryBuilder('o')
-            ->andWhere('o.id = :id OR o.parent = :id')
-            ->setParameter('id', $id)
-            ->orderBy('o.createdAt', 'ASC')
-            ->getQuery()
-            ->getResult()
-            ;
-    }
-
 }

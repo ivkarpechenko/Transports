@@ -15,13 +15,13 @@ class LogisticsDtoNormalizer implements NormalizerInterface
 
     public function normalize(mixed $object, string $format = null, array $context = []): bool|array
     {
-        if(!$this->supportsNormalization($object)){
+        if (!$this->supportsNormalization($object)) {
             return false;
         }
         return [
-            "id" => $object->getID(),
-            "name" => $object->getName(),
-            "totalPrice" => $object->getPrice()
+            "id" => $object->id,
+            "name" => $object->name,
+            "price" => $object->price
         ];
     }
 

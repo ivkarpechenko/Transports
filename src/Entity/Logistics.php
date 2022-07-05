@@ -20,17 +20,22 @@ class Logistics
     #[ORM\Column(type: 'integer')]
     private $idOrder;
 
-    #[ORM\Column(type: 'string', length: 255, options:["default" => 'Создан'])]
+    #[ORM\Column(type: 'string', length: 255, options: ["default" => 'Created'])]
     private $status = 'Created';
 
-    #[ORM\Column(type: 'datetime')]
+    #[ORM\Column(type: 'string', length: 255)]
     private $createdAt;
-
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private $parent;
 
     #[ORM\Column(type: 'integer')]
     private $totalPrice;
+
+    public function __construct($company, $idOrder, $createdAt, $totalPrice)
+    {
+        $this->company = $company;
+        $this->idOrder = $idOrder;
+        $this->createdAt = $createdAt;
+        $this->totalPrice = $totalPrice;
+    }
 
     public function getId(): ?int
     {
@@ -73,26 +78,14 @@ class Logistics
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreatedAt(): string
     {
         return $this->createdAt;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): self
+    public function setCreatedAt(string $createdAt): self
     {
         $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    public function getParent(): ?int
-    {
-        return $this->parent;
-    }
-
-    public function setParent(?int $parent): self
-    {
-        $this->parent = $parent;
 
         return $this;
     }

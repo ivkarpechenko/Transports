@@ -19,28 +19,9 @@ class CreateLogisticsService implements CreateLogisticsServiceInterface
 
     public function create(OrderDto $dto): LogisticsDto
     {
-        $logistics = new Logistics();
-
-        $company = $this->companyRepository->findProfitByVolumeAndWeight($dto->getVolume(), $dto->getWeight());
-        $logistics->setCompany($this->companyRepository->find($company["id"]));
-        $logistics->setCreatedAt(new \DateTime());
-        $logistics->setTotalPrice($company["min"]);
-        $logistics->setIdOrder($dto->getId());
-
+        $company = $this->companyRepository->findProfitByVolumeAndWeight($dto->volume, $dto->weight);
+        $logistics = new Logistics($this->companyRepository->find($company["id"]), $dto->id, (new \DateTime())->format(DATE_ATOM), $company["min"]);
         $this->logisticsRepository->add($logistics);
-        return new LogisticsDto($logistics->getId(), $company["min"], $company["name"] , $logistics->getStatus(), $logistics->getCreatedAt());
+        return new LogisticsDto($logistics->getId(), $company["min"], $company["name"], $logistics->getStatus(), $logistics->getCreatedAt());
     }
-
-    public function saveInHistory(?Logistics $logistics): void
-    {
-        $oldStatusLogistics = new Logistics();
-        $oldStatusLogistics->setParent($logistics->getId());
-        $oldStatusLogistics->setCompany($logistics->getCompany());
-        $oldStatusLogistics->setStatus($logistics->getStatus());
-        $oldStatusLogistics->setCreatedAt($logistics->getCreatedAt());
-        $oldStatusLogistics->setTotalPrice($logistics->getTotalPrice());
-        $oldStatusLogistics->setIdOrder($logistics->getIdOrder());
-        $this->logisticsRepository->add($oldStatusLogistics);
-    }
-
 }

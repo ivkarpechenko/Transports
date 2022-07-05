@@ -42,8 +42,8 @@ class CompanyRepository extends ServiceEntityRepository
     public function findProfitByVolumeAndWeight($volume, $weight)
     {
         return $this->createQueryBuilder('g')
-            ->from(Company::class,'c')
-            ->select( "c.id, c.name, min(c.volumeCost*:vol + c.weightCost*:wei)as min")
+            ->from(Company::class, 'c')
+            ->select("c.id, c.name, min(c.volumeCost*:vol + c.weightCost*:wei)as min")
             ->groupBy("c.id")
             ->orderBy("min")
             ->setMaxResults(1)

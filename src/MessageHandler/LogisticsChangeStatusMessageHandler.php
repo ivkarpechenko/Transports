@@ -2,12 +2,13 @@
 
 namespace App\MessageHandler;
 
+use App\Dto\LogisticsDto;
 use App\Entity\Logistics;
 use App\Message\LogisticsChangeStatusMessage;
 use App\Message\LogisticsMessage;
 use App\Message\SendCompletedOrderMessage;
 use App\Repository\LogisticsRepository;
-use App\Service\CreateLogisticsService;
+use App\Service\SaveLogisticsHistoryServiceInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Messenger\Handler\MessageHandlerInterface;
@@ -17,42 +18,48 @@ use Symfony\Component\Workflow\WorkflowInterface;
 class LogisticsChangeStatusMessageHandler implements MessageHandlerInterface
 {
     public function __construct(
-        private EntityManagerInterface $entityManager,
-        private LogisticsRepository    $logisticsRepository,
-        private MessageBusInterface    $bus,
-        private CreateLogisticsService $createLogisticsService,
-        private WorkflowInterface      $orderStateMachine,
-        private ?LoggerInterface       $logger = null
+        private EntityManagerInterface               $entityManager,
+        private LogisticsRepository                  $logisticsRepository,
+        private MessageBusInterface                  $bus,
+        private SaveLogisticsHistoryServiceInterface $saveLogisticsHistoryService,
+        private WorkflowInterface                    $logisticsStateMachine,
+        private ?LoggerInterface                     $logger = null
     )
     {
     }
 
     public function __invoke(LogisticsChangeStatusMessage $logisticsChangeStatusMessage)
     {
-        $logistics = $this->logisticsRepository->find($logisticsChangeStatusMessage->getId());
-        if ($this->orderStateMachine->can($logistics, 'worked') && $logisticsChangeStatusMessage->getStatus() == "Processed") {
+        $logistics = $this->logisticsRepository->find($logisticsChangeStatusMessage->id);
+        if ($this->logisticsStateMachine->can($logistics, 'worked') && $logisticsChangeStatusMessage->status == "Processed") {
             $transaction = 'worked';
             $this->saveInHistory($logistics, $transaction);
-        } elseif ($this->orderStateMachine->can($logistics, 'to_place') && $logisticsChangeStatusMessage->getStatus() == "Handed over to the pickup point") {
+        } elseif ($this->logisticsStateMachine->can($logistics, 'to_place') && $logisticsChangeStatusMessage->status == "Handed over to the pickup point") {
             $transaction = 'to_place';
             $this->saveInHistory($logistics, $transaction);
-        } elseif ($this->orderStateMachine->can($logistics, 'complete') && $logisticsChangeStatusMessage->getStatus() == "Delivered") {
+        } elseif ($this->logisticsStateMachine->can($logistics, 'complete') && $logisticsChangeStatusMessage->status == "Delivered") {
             $transaction = 'complete';
             $this->saveInHistory($logistics, $transaction);
             $this->bus->dispatch(new SendCompletedOrderMessage($logistics->getIdOrder(), "Completed"));
         } elseif ($this->logger) {
-            $this->logger->alert('Dropping order message', ['orderID' => $logisticsChangeStatusMessage->getId(), 'status' => $logisticsChangeStatusMessage->getStatus()]);
+            $this->logger->alert('Dropping order message', ['orderID' => $logisticsChangeStatusMessage->status, 'status' => $logisticsChangeStatusMessage->status]);
         }
     }
 
     public function saveInHistory(?Logistics $logistics, string $transaction): void
     {
-        $this->createLogisticsService->saveInHistory($logistics);
-        $this->orderStateMachine->apply($logistics, $transaction);
-        $logistics->setCreatedAt(new \DateTime());
-        $this->logisticsRepository->add($logistics);
+        $this->logisticsStateMachine->apply($logistics, $transaction);
+
+        $this->saveLogisticsHistoryService->save(
+            new LogisticsDto(
+                $logistics->getId(),
+                $logistics->getTotalPrice(),
+                $logistics->getCompany()->getName(),
+                $logistics->getStatus(),
+                $logistics->getCreatedAt()
+            )
+        );
         $this->entityManager->flush();
         $this->bus->dispatch(new LogisticsMessage($logistics->getId()));
     }
-
 }
